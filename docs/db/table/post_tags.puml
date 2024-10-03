@@ -1,0 +1,8 @@
+@startuml post_tags
+entity "post_tags" {
+  *post_id[PK1][FK] : 投稿ID : BIGINT
+  *tag_id[PK2][FK] : タグID : BIGINT
+  --
+  tag_order : タグの表示順序 : INT,
+}
+@enduml

@@ -1,0 +1,7 @@
+@startuml image
+entity "image" {
+  *image_id[PK] : 画像ID : BIGINT
+  --
+  s3_url : S3 URL : VARCHAR(255)
+}
+@enduml

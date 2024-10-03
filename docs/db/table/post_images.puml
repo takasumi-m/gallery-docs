@@ -1,0 +1,8 @@
+@startuml post_images
+entity "post_images" {
+  *post_id[PK1][FK] : 投稿ID : BIGINT
+  *image_id[PK2][FK] : 画像ID : BIGINT
+  --
+  image_order : 画像の表示順序 : INT,
+}
+@enduml

@@ -1,0 +1,7 @@
+@startuml tag
+entity "tag" {
+  *tag_id[PK] : タグID : BIGINT
+  --
+  name : タグ名 : VARCHAR(50)
+}
+@enduml

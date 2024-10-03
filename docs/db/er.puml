@@ -1,0 +1,12 @@
+@startuml er
+!include ./table/post.puml
+!include ./table/image.puml
+!include ./table/post_images.puml
+!include ./table/tag.puml
+!include ./table/post_tags.puml
+
+post ||-r--o{ post_tags : ""
+post ||-l--|{ post_images : ""
+image ||-u--|| post_images : ""
+tag ||-u--o{ post_tags : ""
+@enduml
