@@ -2,6 +2,8 @@
 entity "image" {
   *image_id[PK] : 画像ID : BIGINT
   --
-  s3_url : S3 URL : VARCHAR(255)
+  file_path : ファイルパス : VARCHAR(255)
+  unique_filename : ユニークファイル名 : VARCHAR(255)
+  original_filename : オリジナルファイル名 : VARCHAR(255)
 }
 @enduml
