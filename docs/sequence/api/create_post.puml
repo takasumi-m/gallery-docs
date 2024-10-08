@@ -1,0 +1,127 @@
+@startuml
+skinparam ParticipantBorderColor #007ACC
+skinparam ParticipantBackgroundColor #E6F7FF
+
+actor User as user
+participant "API Server" as server
+participant "Amazon S3" as S3
+participant "Database" as DB
+
+activate server
+user -> server: POST
+note right of user
+    endpoint:
+        /api/post
+    request:
+        caption
+        tagList
+        location
+        deletePassword
+        imageList
+end note
+server -> server: 現在日付、現在日時を取得
+loop For each imageList
+    server -> S3: S3にimageをアップロード
+    note right of S3
+        path: yyyy/MM/dd
+        filename: yyyyMMddSSsss_UUID.{元ファイルの拡張子}
+    end note
+    activate S3
+    S3 -> server: S3アップロード情報(path, filename)
+    deactivate S3
+end loop
+server -> DB: insert
+activate DB
+    note right of DB
+        table:
+            post
+        colum:
+            post_id : AUTO_INCREMENT
+            status : enable
+            caption : request.caption
+            location : request.location
+            upload_date : 現在日付
+            upload_datetime : 現在日時
+            deletePassword : request.deletePassword
+    end note
+DB -> server: post_id
+deactivate DB
+
+
+loop For each S3アップロード情報 list
+    server -> DB: insert
+    activate DB
+        note right of DB
+            table:
+                image
+            colum:
+                image_id : AUTO_INCREMENT
+                file_path : S3アップロード情報.path
+                unique_name : S3アップロード情報.filename
+                original_name : request.imageList.filename
+        end note
+    DB -> server: image_id
+    deactivate DB
+end loop
+
+loop For each image_id list
+    server -> DB: insert
+    activate DB
+    note right of DB
+        table:
+            post_images
+        colum:
+            post_id : post_id
+            image_id : image_id
+            image_order : INCREMENT
+    end note
+    DB -> server:
+    deactivate DB
+end loop
+
+server -> server: tagListの重複削除
+
+loop For each tagList
+    server -> DB: upsert
+    activate DB
+    note right of DB
+        table:
+            tag
+        colum:
+            tag : AUTO_INCREMENT
+            name : request.tagList.name
+    end note
+    DB -> server:  tag_id
+    deactivate DB
+end loop
+
+loop For each tagList
+
+    server -> DB: insert
+    activate DB
+        note right of DB
+            table:
+                post_tags
+            colum:
+                post_id : post_id
+                image_id : tag_id
+                image_order : INCREMENT
+        end note
+    server -> DB:
+    deactivate DB
+end loop
+
+alt S3アップロード失敗時 or DB insert失敗時
+    server -> S3: S3にアップロードされたファイルを削除
+    server -> DB: Rollback
+    server -> user: 500 Internal Server Error
+end alt
+
+DB -> server: Return postId
+server -> user: 201 Created
+note right of user
+    response:
+        post_id
+end note
+deactivate server
+@enduml
