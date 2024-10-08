@@ -40,8 +40,8 @@ activate DB
             status : enable
             caption : request.caption
             location : request.location
-            upload_date : 現在日付
-            upload_datetime : 現在日時
+            post_date : 現在日付
+            post_datetime : 現在日時
             deletePassword : request.deletePassword
     end note
 DB -> server: post_id

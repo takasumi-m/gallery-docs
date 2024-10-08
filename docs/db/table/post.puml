@@ -5,8 +5,8 @@ entity "post" {
   status : ステータス : VARCHAR(20)
   caption : キャプション : TEXT
   location : 撮影場所 : VARCHAR(255)
-  upload_date : アップロード日 : DATE
-  upload_datetime : アップロード日時 : DATETIME
+  post_date : アップロード日 : DATE
+  post_datetime : アップロード日時 : DATETIME
   delete_password : 削除用パスワード : VARCHAR(255)
 }
 @enduml
