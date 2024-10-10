@@ -122,6 +122,7 @@ server -> user: 201 Created
 note right of user
     response:
         post_id
+        post_datetime
 end note
 deactivate server
 @enduml
