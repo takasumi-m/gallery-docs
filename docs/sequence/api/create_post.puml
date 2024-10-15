@@ -44,7 +44,7 @@ activate DB
             post_datetime : 現在日時
             deletePassword : request.deletePassword
     end note
-DB -> server: post_id
+DB -> server: post_id, post_datetime
 deactivate DB
 
 
@@ -117,7 +117,6 @@ alt S3アップロード失敗時 or DB insert失敗時
     server -> user: 500 Internal Server Error
 end alt
 
-DB -> server: Return postId
 server -> user: 201 Created
 note right of user
     response:
