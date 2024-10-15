@@ -111,17 +111,18 @@ loop For each tagList
     deactivate DB
 end loop
 
-alt S3アップロード失敗時 or DB insert失敗時
+alt 異常:S3アップロード失敗時 or DB insert失敗時
     server -> S3: S3にアップロードされたファイルを削除
     server -> DB: Rollback
     server -> user: 500 Internal Server Error
+else 正常
+    server -> user: 201 Created
+    note right of user
+        response:
+            post_id
+            post_datetime
+    end note
+    deactivate server
 end alt
-
-server -> user: 201 Created
-note right of user
-    response:
-        post_id
-        post_datetime
-end note
 deactivate server
 @enduml
