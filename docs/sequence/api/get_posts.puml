@@ -1,0 +1,127 @@
+@startuml
+skinparam ParticipantBorderColor #007ACC
+skinparam ParticipantBackgroundColor #E6F7FF
+
+actor User as user
+participant "API Server" as server
+participant "Amazon S3" as S3
+participant "Database" as DB
+
+activate server
+user -> server: GET
+note right of user
+    endpoint:
+        /api/posts
+    request:
+        caption
+        location
+        postDate
+        postDatetime
+        tagList
+        limit
+end note
+alt request.postDatetimeがNULLでない場合
+    server -> server: postDate = request.postDatetimeの日付部分
+end alt
+
+server -> DB: select
+activate DB
+note right of DB
+    table:
+        post
+        INNER JOIN post_images
+            ON post.post_id = post_images.post_id
+            AND post_images.image_order = 0
+        INNER JOIN image
+            ON image.image_id = post_images.image_id
+    colum:
+        post.post_id
+        post.caption
+        post.location
+        post.post_date
+        post.post_datetime
+        post_images.image_order
+        image.file_path
+        image.unique_filename
+        image.original_filename
+    conditions:
+        status = "enabled"
+        caption LIKE '%request.caption%'
+        location LIKE '%request.location%'
+        post_date = postDate
+        post_datetime <= request.postDatetime
+        post_id in  (
+            table:
+                tag
+                INNER JOIN post_tags
+                    ON tag.tag_id = post_tags.tag_id
+            colum:
+                post_tags.image_id
+            conditions:
+                tag.tag_name IN (request.tagList)
+            having:
+                COUNT(tag.tag_id) = request.tagList.length
+    order by:
+        post_datetime DESC
+    limit: 50
+end note
+
+DB -> server: 投稿情報リスト
+deactivate DB
+
+loop For Each 投稿情報リスト
+    server -> DB: select
+    activate DB
+    note right of DB
+        table:
+            tag
+            INNER JOIN post_tags
+                ON tag.tag_id = post_tags.tag_id
+        colum:
+            tag.name
+        conditions:
+            post_tags.post_id = 投稿情報.post_id
+        order by:
+            post_tags.tag_order
+    end note
+    DB -> server: タグリスト
+    deactivate DB
+
+    server -> server: 投稿情報とタグリストをレスポンスに詰める
+end loop
+
+loop For Each 投稿情報リスト
+    server -> S3: 投稿情報.file_pathと投稿情報.unique_filenameを元にファイルを取得
+    activate S3
+    S3 -> server: image
+    deactivate S3
+end loop
+
+server -> server: imageをzip化
+
+server -> server: zip化imageをレスポンスに詰める
+
+
+alt posts found
+    server -> user: 200 OK
+    note right of user
+        response:
+            data: [
+                {
+                    post_id : 投稿情報.post_id
+                    caption : 投稿情報.caption
+                    location : 投稿情報.location
+                    post_date : 投稿情報.post_date
+                    post_datetime : 投稿情報.post_datetime
+                    tagList : [タグリスト]
+                    imageOrder : 投稿情報.image_order
+                    unique_filename : 投稿情報.unique_filename
+                    original_filename : 投稿情報.original_filename
+                },
+                ...
+            ]
+    end note
+end alt
+
+deactivate server
+@enduml
