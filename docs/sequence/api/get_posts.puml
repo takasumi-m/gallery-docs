@@ -4,7 +4,6 @@ skinparam ParticipantBackgroundColor #E6F7FF
 
 actor User as user
 participant "API Server" as server
-participant "Amazon S3" as S3
 participant "Database" as DB
 
 activate server
@@ -18,9 +17,8 @@ note right of user
         postDate
         postDatetime
         tagList
-        limit
 end note
-alt request.postDatetimeがNULLでない場合
+alt request.postDateがNULL && request.postDatetimeがNULLでない場合
     server -> server: postDate = request.postDatetimeの日付部分
 end alt
 
@@ -29,21 +27,12 @@ activate DB
 note right of DB
     table:
         post
-        INNER JOIN post_images
-            ON post.post_id = post_images.post_id
-            AND post_images.image_order = 0
-        INNER JOIN image
-            ON image.image_id = post_images.image_id
     colum:
         post.post_id
         post.caption
         post.location
         post.post_date
         post.post_datetime
-        post_images.image_order
-        image.file_path
-        image.unique_filename
-        image.original_filename
     conditions:
         status = "enabled"
         caption LIKE '%request.caption%'
@@ -90,18 +79,6 @@ loop For Each 投稿情報リスト
     server -> server: 投稿情報とタグリストをレスポンスに詰める
 end loop
 
-loop For Each 投稿情報リスト
-    server -> S3: 投稿情報.file_pathと投稿情報.unique_filenameを元にファイルを取得
-    activate S3
-    S3 -> server: image
-    deactivate S3
-end loop
-
-server -> server: imageをzip化
-
-server -> server: zip化imageをレスポンスに詰める
-
-
 alt posts found
     server -> user: 200 OK
     note right of user
@@ -114,13 +91,12 @@ alt posts found
                     post_date : 投稿情報.post_date
                     post_datetime : 投稿情報.post_datetime
                     tagList : [タグリスト]
-                    imageOrder : 投稿情報.image_order
-                    unique_filename : 投稿情報.unique_filename
-                    original_filename : 投稿情報.original_filename
                 },
                 ...
             ]
     end note
+else database error
+    server -> user: 500 Internal Server Error
 end alt
 
 deactivate server

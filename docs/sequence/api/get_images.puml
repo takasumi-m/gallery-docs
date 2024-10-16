@@ -1,0 +1,55 @@
+@startuml
+skinparam ParticipantBorderColor #007ACC
+skinparam ParticipantBackgroundColor #E6F7FF
+
+actor User as user
+participant "API Server" as server
+participant "Amazon S3" as S3
+participant "Database" as DB
+
+activate server
+user -> server: GET
+note right of user
+    endpoint:
+        /api/posts/{postId}/images
+end note
+
+server -> DB: select
+activate DB
+note right of DB
+    table:
+        post_images
+        INNER JOIN image
+            ON post_images.image_id = image.image_id
+    colum:
+        image.file_path
+        image.unique_filename
+    conditions:
+        post_images.image_order != 0
+        post_images.post_id = request.postId
+end note
+DB -> server : [file_path, unique_filename], ...
+deactivate DB
+
+loop [file_path, unique_filename], ...
+    server -> S3: file_path, unique_filename
+    activate S3
+    S3 -> server : 画像ファイル
+    deactivate S3
+end loop
+
+server -> server : 画像ファイルをzip化
+
+alt posts found
+    server -> user: 200 OK
+    note right of user
+        response: zipファイル
+    end note
+else no image
+    server -> user: 404 Not Found
+else database error
+    server -> user: 500 Internal Server Error
+end alt
+
+deactivate server
+@enduml
