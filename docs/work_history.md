@@ -16,8 +16,14 @@
 3. EC2の作成
     1. JDKのinstall
     2. DBeaverのinstall
-3. RDSの作成
-4. S3バケットの作成
+4.RDSの作成
+5.S3バケットの作成
+
+## 開発ツール
+- Intellij
+    - AWS Tool Kit
+    - lombok
+- docker
 
 
 ## AWS作成
@@ -33,5 +39,9 @@
 - RDS専用のセキュリティーグループ
 - S3バケット
 
+## React library
+- axios
+
+
 ## 失敗
-- 無料枠でないRDSをえらんでしまった、、、-3000円
+- 無料枠でないRDSをえらんでしまった、、、-6000円
